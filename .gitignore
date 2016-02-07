@@ -1,0 +1,17 @@
+*
+!CMakeLists.txt
+!.gitignore
+
+!include
+include/*
+!include/*.h
+
+!lib
+lib/*
+!lib/*.cpp
+!lib/CMakeLists.txt
+
+!test
+test/*
+!test/*.cpp
+!test/CMakeLists.txt
