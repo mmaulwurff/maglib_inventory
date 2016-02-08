@@ -8,14 +8,14 @@ public:
     InventoryItemPointerAdapter() : pointer(nullptr) {}
     explicit InventoryItemPointerAdapter(PointedType* const setPointer)
         : pointer(setPointer) {}
+    InventoryItemPointerAdapter(const InventoryItemPointerAdapter<PointedType>& other)
+        : pointer(new PointedType(*other.pointer)) {}
+    InventoryItemPointerAdapter(InventoryItemPointerAdapter<PointedType>&& other)
+        : pointer(other.release()) {}
 
     ~InventoryItemPointerAdapter() { delete pointer; }
 
-    PointedType* release() {
-        PointedType* ret = pointer;
-        pointer = nullptr;
-        return ret;
-    }
+    PointedType* release();
 
     bool operator==(const InventoryItemPointerAdapter<PointedType>& other) const;
     void operator= (const InventoryItemPointerAdapter<PointedType>& other);
@@ -28,6 +28,13 @@ private:
 
     mutable PointedType* pointer ;
 };
+
+template <typename PointedType>
+PointedType* InventoryItemPointerAdapter<PointedType>::release() {
+    PointedType* const ret = pointer;
+    pointer = nullptr;
+    return ret;
+}
 
 template <typename PointedType>
 void InventoryItemPointerAdapter<PointedType>::operator=(

@@ -1,6 +1,8 @@
 #ifndef MAGLIB_INVENTORY_INVENTORY_ITEM_INTERFACE_H
 #define MAGLIB_INVENTORY_INVENTORY_ITEM_INTERFACE_H
 
+#include <cassert>
+
 template <typename ContentType, class Derived>
 class InventoryItemInterface {
 public:
@@ -10,11 +12,13 @@ public:
     int getMaxStackSize() const
         { return static_cast<const Derived*>(this)->getMaxStackSizeInner(); }
 
-    bool receiveInto(const ContentType& receivedContent);
+    bool push(const ContentType& receivedContent);
 
     int getCount() const { return count; }
 
     const ContentType& showContent() const { return content; }
+
+    ContentType pop();
 
     typedef ContentType content_type;
 
@@ -25,7 +29,7 @@ protected:
 };
 
 template <typename ContentType, typename Derived>
-bool InventoryItemInterface<ContentType, Derived>::receiveInto(const ContentType& newContent) {
+bool InventoryItemInterface<ContentType, Derived>::push(const ContentType& newContent) {
     if (static_cast<Derived*>(this)->receiveIntoInner(newContent)) return true;
 
     if ((count == 0) || (count < getMaxStackSize() && newContent == content)) {
@@ -35,6 +39,13 @@ bool InventoryItemInterface<ContentType, Derived>::receiveInto(const ContentType
     } else {
         return false;
     }
+}
+
+template <typename ContentType, typename Derived>
+ContentType InventoryItemInterface<ContentType, Derived>::pop() {
+    --count;
+    assert(count >= 0);
+    return ContentType(content);
 }
 
 #endif //MAGLIB_INVENTORY_INVENTORY_ITEM_INTERFACE_H
