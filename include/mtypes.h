@@ -1,6 +1,0 @@
-#ifndef MAGLIB_INVENTORY_MTYPES_H
-#define MAGLIB_INVENTORY_MTYPES_H
-
-typedef const int c_int;
-
-#endif //MAGLIB_INVENTORY_MTYPES_H

@@ -94,7 +94,7 @@ inv_cell<c_t, max> inv_cell<c_t, max>::pop(const int pop_count) {
     return inv_cell<c_t, max>(content, pop_count);
 }
 
-} // stop using namespace mag;
+} // namespace mag;
 
 template <typename c_t, int max>
 std::ostream& operator<<(std::ostream& str, const mag::inv_cell<c_t, max>& c) {

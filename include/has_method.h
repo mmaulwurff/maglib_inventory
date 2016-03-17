@@ -7,6 +7,7 @@
 #include <type_traits>
 
 #define HAS_METHOD_INIT(method) \
+namespace mag_detail { \
 template <typename N, typename T> \
 struct has_##method { \
     static_assert( std::integral_constant<T, false>::value \
@@ -26,9 +27,10 @@ private: \
 \
 public: \
     static constexpr bool value = decltype(check<C>(nullptr))::value; \
-};
+}; \
+}
 
 #define HAS_METHOD(type, method, method_type) \
-has_##method<type, method_type>::value
+mag_detail::has_##method<type, method_type>::value
 
 #endif //MAGLIB_INVENTORY_HAS_METHOD_H
