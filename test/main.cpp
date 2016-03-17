@@ -1,4 +1,4 @@
-#include "fixed_inventory.h"
+#include "fixed_size_inv.h"
 #include "managed_pointer.h"
 
 #include <cassert>
@@ -35,15 +35,15 @@ const struct {
     two_int_cell item;
     assert(item.get_max_stack_size() == 2);
     assert(item.get_count() == 0);
-    cout << "two_int_cell item before: " << item;
+    cout << "two_int_cell item before: " << item << endl;
 
     {
-        two_int_cell item2(5);
+        two_int_cell item2(5, 1);
         const mag::push_results result = item.push(item2);
         assert(item.get_count() == 1);
         assert(result == mag::fit_full);
     } {
-        two_int_cell item3(5);
+        two_int_cell item3(5, 1);
         const mag::push_results result_two = item.push(item3);
         assert(item.get_count() == 2);
         assert(item3.get_count() == 0);
@@ -57,11 +57,11 @@ const struct {
         const mag::push_results result_push = item.push(item_push);
         assert(result_push == mag::fit_partial);
     } {
-        two_int_cell item_no_fit(3);
+        two_int_cell item_no_fit(3, 1);
         const mag::push_results result_no_fit = item.push(item_no_fit);
         assert(result_no_fit == mag::fit_none);
     }
-    cout << "two_int_cell item after: " << item;
+    cout << "two_int_cell item after: " << item << endl;
 }},
 
 { "managed_pointer", []() {
@@ -109,7 +109,7 @@ const struct {
     typedef managed_pointer<memory_test> adapter;
     typedef inv_cell<adapter> cell;
     cell c1(adapter(new memory_test(40)), 20);
-    cout << "pointer cell before: " << c1;
+    cout << "pointer cell before: " << c1 << endl;
     assert(c1.get_max_stack_size() == memory_test::max_stack);
     {
         cell empty;
@@ -126,7 +126,31 @@ const struct {
         assert(c1.showContent().get() != nullptr);
         assert(c3.get_count() == 10);
     }
-    cout << "pointer cell after: " << c1;
+    cout << "pointer cell after: " << c1 << endl;
+}},
+
+{ "fixed inv", []() {
+    typedef inv_cell<managed_pointer<memory_test>, 10> cell;
+    typedef managed_pointer<memory_test> m_pointer;
+    fixed_size_inv<cell, 2, 4> inv;
+    cout << "Empty inventory:" << endl << inv;
+    {
+        cell c(m_pointer(new memory_test(7)), 3);
+        inv.push(1, 2, c);
+        cell cn(m_pointer(new memory_test(1)), 9);
+        inv.push(1, 3, cn);
+    } {
+        cell c2(m_pointer(new memory_test(5)), 4);
+        inv.push(1, 2, c2);
+        cout << "Push inventory:" << endl << inv;
+    } {
+        cell c3 = inv.pop(1, 2, 1);
+        cout << "Pop inventory:" << endl << inv;
+    } {
+        for (const cell& c: inv) {
+            cout << c << endl;
+        }
+    }
 }},
 
 };

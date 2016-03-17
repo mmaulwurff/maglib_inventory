@@ -9,4 +9,4 @@ set_target_properties(maglib_inventory_test PROPERTIES
 set_target_properties(maglib_inventory_test PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/release)
 
-target_link_libraries(maglib_inventory_test LINK_PUBLIC maglib_inventory)
+#target_link_libraries(maglib_inventory_test LINK_PUBLIC maglib_inventory)

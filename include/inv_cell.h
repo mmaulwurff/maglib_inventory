@@ -28,7 +28,7 @@ public:
 
     inv_cell() : count(0), content() {}
 
-    explicit inv_cell(const content_type& init, const int _count = 1)
+    explicit inv_cell(const content_type& init, const int _count)
         : count(_count), content(init)
     {
         assert(count <= get_max_stack_size());
@@ -47,7 +47,7 @@ public:
     /** Tries to push some other item to this item.
      *  It is possible for other item to not fit.
      *  @returns remainder of other item that doesn't fit. */
-    mag::push_results push(this_type& other);
+    push_results push(this_type& other);
     this_type pop(int count);
 
     int get_count() const { return count; }
@@ -98,7 +98,7 @@ inv_cell<c_t, max> inv_cell<c_t, max>::pop(const int pop_count) {
 
 template <typename c_t, int max>
 std::ostream& operator<<(std::ostream& str, const mag::inv_cell<c_t, max>& c) {
-    return (str << c.showContent() << "x" << c.get_count() << std::endl);
+    return (str << c.showContent() << "x" << c.get_count());
 }
 
 #endif //MAGLIB_INVENTORY_INVENTORY_ITEM_INTERFACE_H

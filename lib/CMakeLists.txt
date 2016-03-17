@@ -3,10 +3,8 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/build/")
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
-set(SOURCES fixed_inventory.cpp)
-
-add_library(maglib_inventory_static STATIC ${SOURCES} ../include/fixed_inventory.h)
-add_library(maglib_inventory SHARED ${SOURCES} ../include/fixed_inventory.h)
+add_library(maglib_inventory_static STATIC ${SOURCES} ../include/fixed_size_inv.h)
+add_library(maglib_inventory SHARED ${SOURCES} ../include/fixed_size_inv.h)
 
 set_target_properties(maglib_inventory_static PROPERTIES ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/debug)
 set_target_properties(maglib_inventory_static PROPERTIES ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/release)
