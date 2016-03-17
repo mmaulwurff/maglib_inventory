@@ -5,7 +5,7 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 
 set(HEADERS
         ${PROJECT_SOURCE_DIR}/include/ItemLayouts.h
-        ${PROJECT_SOURCE_DIR}/include/inv_pointer_adapter.h
+        ${PROJECT_SOURCE_DIR}/include/managed_pointer.h
         ${PROJECT_SOURCE_DIR}/include/inv_cell.h
         ${PROJECT_SOURCE_DIR}/include/fixed_inventory.h
         ${PROJECT_SOURCE_DIR}/include/has_method.h

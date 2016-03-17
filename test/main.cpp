@@ -1,5 +1,5 @@
 #include "fixed_inventory.h"
-#include "inv_pointer_adapter.h"
+#include "managed_pointer.h"
 
 #include <cassert>
 #include <iostream>
@@ -10,14 +10,16 @@ using namespace mag;
 
 class memory_test {
 public:
-    memory_test() : j(i++)    {++c; if (o) cout << "MT with i + " << j << endl;}
-    memory_test(int s) : j(s) {++c; if (o) cout << "MT with i + " << j << endl;}
-    ~memory_test()            {--c; if (o) cout << "MT with i - " << j << endl;}
+    memory_test()      : j(i++) { out(); }
+    memory_test(int s) : j(s)   { out(); }
+    memory_test(const memory_test& other) : j(other.j) { out(); }
+    ~memory_test() { --c; if (o) cout << "MT with i - " << j << endl; }
     int get_max_stack_size() const { return max_stack; }
     bool operator==(const memory_test& o) const { return j == o.j; }
     static const int max_stack = 37;
     static int c;
 private:
+    void out() { ++c; if (o) cout << "MT with i + " << j << endl; }
     static const bool o = false;
     static int i;
     const  int j;
@@ -33,6 +35,7 @@ const struct {
     two_int_cell item;
     assert(item.get_max_stack_size() == 2);
     assert(item.get_count() == 0);
+    cout << "two_int_cell item before: " << item;
 
     {
         two_int_cell item2(5);
@@ -58,10 +61,11 @@ const struct {
         const mag::push_results result_no_fit = item.push(item_no_fit);
         assert(result_no_fit == mag::fit_none);
     }
+    cout << "two_int_cell item after: " << item;
 }},
 
-{ "inv_pointer_adapter", []() {
-    typedef inv_pointer_adapter<memory_test> wrapped;
+{ "managed_pointer", []() {
+    typedef managed_pointer<memory_test> wrapped;
     { // basic constructor/destructor test
         wrapped one(new memory_test);
         wrapped two(new memory_test);
@@ -77,8 +81,13 @@ const struct {
         assert(memory_test::c == 0);
         wrapped one(new memory_test);
         wrapped two(one);
-        assert(one != two);
-        assert(one.get() == nullptr);
+        assert(one == two);
+    } { // move constructor test
+        assert(memory_test::c == 0);
+        wrapped source(new memory_test);
+        wrapped dest(move(source));
+        assert(source.get() == nullptr);
+        assert(source != dest);
     } { // release test
         assert(memory_test::c == 0);
         wrapped one(new memory_test);
@@ -97,9 +106,10 @@ const struct {
 }},
 
 { "pointer_cell", []() {
-    typedef inv_pointer_adapter<memory_test> adapter;
+    typedef managed_pointer<memory_test> adapter;
     typedef inv_cell<adapter> cell;
     cell c1(adapter(new memory_test(40)), 20);
+    cout << "pointer cell before: " << c1;
     assert(c1.get_max_stack_size() == memory_test::max_stack);
     {
         cell empty;
@@ -113,8 +123,10 @@ const struct {
         assert(result == mag::fit_partial);
     } {
         cell c3 = c1.pop(10);
+        assert(c1.showContent().get() != nullptr);
         assert(c3.get_count() == 10);
     }
+    cout << "pointer cell after: " << c1;
 }},
 
 };
