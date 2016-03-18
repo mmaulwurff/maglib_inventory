@@ -8,9 +8,7 @@
 
 HAS_METHOD_INIT(get_max_stack_size)
 
-namespace mag {
-    enum push_results { fit_none, fit_partial, fit_full };
-
+namespace mag_detail {
 template <typename T, int max, int has_max> struct get_max_stack_size_inner
     { static int get(const T&) {} };
 
@@ -19,30 +17,24 @@ template <typename T, int max> struct get_max_stack_size_inner<T, max, 0>
 
 template <typename T, int max> struct get_max_stack_size_inner<T, max, 1>
     { static int get(const T& c) { return c.get_max_stack_size(); } };
+}
+
+namespace mag {
+    enum push_results { fit_none, fit_partial, fit_full };
 
 template <typename content_type, int max_stack_size = 1>
 class inv_cell {
-    typedef inv_cell<content_type, max_stack_size> this_type;
-
 public:
+
+    typedef inv_cell<content_type, max_stack_size> this_type;
 
     inv_cell() : count(0), content() {}
 
-    explicit inv_cell(const content_type& init, const int _count)
-        : count(_count), content(init)
-    {
-        assert(count <= get_max_stack_size());
-    }
+    inv_cell(const content_type& init, int count);
 
     /** Shows how much of this item can fit in a stack (one cell in inventory).
      * @returns maximum number of items in stack. */
-    int get_max_stack_size() const {
-        return get_max_stack_size_inner< content_type
-                                       , max_stack_size
-                                       , HAS_METHOD( content_type
-                                                   , get_max_stack_size
-                                                   , int() )>::get(content);
-    }
+    int get_max_stack_size() const;
 
     /** Tries to push some other item to this item.
      *  It is possible for other item to not fit.
@@ -92,6 +84,20 @@ inv_cell<c_t, max> inv_cell<c_t, max>::pop(const int pop_count) {
     count -= pop_count;
     assert(count >= 0);
     return inv_cell<c_t, max>(content, pop_count);
+}
+
+template <typename c_t, int max>
+inv_cell<c_t, max>::inv_cell(const c_t& init, const int _count)
+    : count(_count)
+    , content(init)
+{
+    assert(count <= get_max_stack_size());
+}
+
+template <typename c_t, int max>
+int inv_cell<c_t, max>::get_max_stack_size() const {
+    return mag_detail::get_max_stack_size_inner<c_t, max,
+        HAS_METHOD(c_t, get_max_stack_size, int())>::get(content);
 }
 
 } // namespace mag;
