@@ -3,7 +3,6 @@
 
 #include <cassert>
 #include <iostream>
-#include <inv_cell.h>
 
 using namespace std;
 using namespace mag;
@@ -130,9 +129,10 @@ const struct {
 }},
 
 { "fixed inv", []() {
-    typedef inv_cell<managed_pointer<memory_test>, 10> cell;
     typedef managed_pointer<memory_test> m_pointer;
-    fixed_size_inv<cell, 2, 4> inv;
+    typedef fixed_size_inv<m_pointer, 2, 4> inv_type;
+    typedef inv_type::cell_type cell;
+    inv_type inv;
     cout << "Empty inventory:" << endl << inv;
     assert(inv.is_empty(0, 0));
     {

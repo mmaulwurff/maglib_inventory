@@ -3,7 +3,7 @@
 
 #include "has_method.h"
 #include <cassert>
-#include <iostream>
+#include <ostream>
 #include <stdlib.h>
 
 HAS_METHOD_INIT(get_max_stack_size)
