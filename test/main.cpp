@@ -134,9 +134,11 @@ const struct {
     typedef managed_pointer<memory_test> m_pointer;
     fixed_size_inv<cell, 2, 4> inv;
     cout << "Empty inventory:" << endl << inv;
+    assert(inv.is_empty(0, 0));
     {
         cell c(m_pointer(new memory_test(7)), 3);
         inv.push(1, 2, c);
+        assert(inv.get_count(1, 2) == 3);
         cell cn(m_pointer(new memory_test(1)), 9);
         inv.push(1, 3, cn);
     } {

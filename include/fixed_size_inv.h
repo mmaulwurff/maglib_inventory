@@ -13,6 +13,8 @@ public:
     fixed_size_inv() : container() {}
 
     const cell_type& show_at(int row, int col) const;
+    int get_count(int row, int col) const;
+    bool is_empty(int row, int col) const;
 
     push_results push(int row, int col, cell_type& pushed);
     cell_type pop(int row, int col, int count);
@@ -21,7 +23,7 @@ public:
     public:
         iterator(cell_type* const begin, cell_type* const end)
             : i(begin), e(end) { while (i->get_count() == 0 && i != e) ++i; }
-        void operator++() { do { ++i; } while (i->get_count() == 0 && i != e); }
+        void operator++() { do ++i; while (i->get_count() == 0 && i != e); }
         bool operator==(const iterator& o) const { return i == o.i; }
         bool operator!=(const iterator& o) const { return i != o.i; }
         cell_type& operator*() { return *i; }
@@ -64,7 +66,17 @@ c_t fixed_size_inv<c_t, R, C>::pop(const int r, const int c, const int count) {
     return show_at(r, c).pop(count);
 }
 
-} // namespace mag;
+template <typename c_t, int R, int C>
+int fixed_size_inv<c_t, R, C>::get_count(const int row, const int col) const {
+    return show_at(row, col).get_count();
+}
+
+template <typename c_t, int R, int C>
+bool fixed_size_inv<c_t, R, C>::is_empty(const int row, const int col) const {
+    return (show_at(row, col).get_count() == 0);
+};
+
+}; // namespace mag;
 
 template <typename c_t, int rows, int cols>
 std::ostream& operator<<( std::ostream& stream
