@@ -10,7 +10,7 @@ HAS_METHOD_INIT(get_max_stack_size)
 
 namespace mag_detail {
 template <typename T, int max, int has_max> struct get_max_stack_size_inner
-    { static int get(const T&) {} };
+    { static int get(const T&) { return 0; } };
 
 template <typename T, int max> struct get_max_stack_size_inner<T, max, 0>
     { static int get(const T&) { return max; } };

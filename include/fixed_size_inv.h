@@ -8,6 +8,8 @@ namespace mag {
 
 template <typename cell_type, int rows, int cols>
 class fixed_size_inv {
+    static_assert(rows >= 1 && cols >=1, "minimal inventory sizes");
+
 public:
 
     fixed_size_inv() : container() {}
@@ -21,15 +23,16 @@ public:
 
     class iterator {
     public:
-        iterator(cell_type* const begin, cell_type* const end)
-            : i(begin), e(end) { while (i->get_count() == 0 && i != e) ++i; }
-        void operator++() { do ++i; while (i->get_count() == 0 && i != e); }
+        iterator(cell_type* const begin, const cell_type* const end)
+            : i(begin), e(end) { while (skip()) ++i; }
+        const iterator& operator++() { do ++i; while (skip()); return *this; }
         bool operator==(const iterator& o) const { return i == o.i; }
         bool operator!=(const iterator& o) const { return i != o.i; }
         cell_type& operator*() { return *i; }
     private:
+        bool skip() const { return (i->get_count() == 0 && i != e); }
         cell_type* i;
-        cell_type* const e;
+        const cell_type* const e;
     };
 
     iterator begin() { return iterator(container, container + size); }
@@ -74,9 +77,9 @@ int fixed_size_inv<c_t, R, C>::get_count(const int row, const int col) const {
 template <typename c_t, int R, int C>
 bool fixed_size_inv<c_t, R, C>::is_empty(const int row, const int col) const {
     return (show_at(row, col).get_count() == 0);
-};
+}
 
-}; // namespace mag;
+} // namespace mag;
 
 template <typename c_t, int rows, int cols>
 std::ostream& operator<<( std::ostream& stream

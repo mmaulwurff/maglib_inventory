@@ -28,7 +28,7 @@ public:
     bool operator==(const this_type& other) const;
     bool operator!=(const this_type& other) const;
 
-    void operator=(const this_type& other);
+    managed_pointer<pointed_type>& operator=(const this_type& other);
 
     const pointed_type& operator* () const { return *pointer; }
     const pointed_type* operator->() const { return  pointer; }
@@ -51,13 +51,14 @@ pointed_type* managed_pointer<pointed_type>::release() const {
 }
 
 template <typename pointed_type>
-void managed_pointer<pointed_type>::operator=(
+managed_pointer<pointed_type>& managed_pointer<pointed_type>::operator=(
     const managed_pointer& other) {
     if (pointer != other.pointer) {
         delete pointer;
         pointer = other.pointer;
     }
     other.pointer = nullptr;
+    return *this;
 }
 
 template <typename p>
