@@ -9,6 +9,8 @@ set(HEADERS
         ${PROJECT_SOURCE_DIR}/include/inv_cell.h
         ${PROJECT_SOURCE_DIR}/include/fixed_size_inv.h
         ${PROJECT_SOURCE_DIR}/include/has_method.h
+        ${PROJECT_SOURCE_DIR}/include/dynamic_inv.h
+        ${PROJECT_SOURCE_DIR}/include/t_iterator.h
 )
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG -DDEBUG=0")

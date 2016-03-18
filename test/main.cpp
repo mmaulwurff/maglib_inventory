@@ -1,5 +1,6 @@
 #include "fixed_size_inv.h"
 #include "managed_pointer.h"
+#include "dynamic_inv.h"
 
 #include <cassert>
 #include <iostream>
@@ -23,6 +24,8 @@ private:
     static int i;
     const  int j;
 }; int memory_test::i = 0; int memory_test::c = 0;
+
+typedef managed_pointer<memory_test> m_pointer;
 
 const struct {
     string test_name;
@@ -64,39 +67,38 @@ const struct {
 }},
 
 { "managed_pointer", []() {
-    typedef managed_pointer<memory_test> wrapped;
     { // basic constructor/destructor test
-        wrapped one(new memory_test);
-        wrapped two(new memory_test);
+        m_pointer one(new memory_test);
+        m_pointer two(new memory_test);
         assert(one != two); // different pointers
     } { // assignment test
         assert(memory_test::c == 0);
-        wrapped one(new memory_test);
-        wrapped two(new memory_test);
+        m_pointer one(new memory_test);
+        m_pointer two(new memory_test);
         one = two;
         assert(one != two);
         assert(two.get() == nullptr);
     } { // copy constructor test
         assert(memory_test::c == 0);
-        wrapped one(new memory_test);
-        wrapped two(one);
+        m_pointer one(new memory_test);
+        m_pointer two(one);
         assert(one == two);
     } { // move constructor test
         assert(memory_test::c == 0);
-        wrapped source(new memory_test);
-        wrapped dest(move(source));
+        m_pointer source(new memory_test);
+        m_pointer dest(move(source));
         assert(source.get() == nullptr);
         assert(source != dest);
     } { // release test
         assert(memory_test::c == 0);
-        wrapped one(new memory_test);
+        m_pointer one(new memory_test);
         delete one.release();
         assert(one.get() == nullptr);
     } { // same pointer
         assert(memory_test::c == 0);
         memory_test* const p_one = new memory_test;
-        wrapped one(p_one);
-        wrapped two(p_one);
+        m_pointer one(p_one);
+        m_pointer two(p_one);
         one = two;
         assert(one.get() == p_one);
         assert(two.get() == nullptr);
@@ -105,16 +107,15 @@ const struct {
 }},
 
 { "pointer_cell", []() {
-    typedef managed_pointer<memory_test> adapter;
-    typedef inv_cell<adapter> cell;
-    cell c1(adapter(new memory_test(40)), 20);
+    typedef inv_cell<m_pointer> cell;
+    cell c1(m_pointer(new memory_test(40)), 20);
     cout << "pointer cell before: " << c1 << endl;
     assert(c1.get_max_stack_size() == memory_test::max_stack);
     {
         cell empty;
         assert(empty.get_max_stack_size() == numeric_limits<int>::max());
     } {
-        cell c2(adapter(new memory_test(40)), 20);
+        cell c2(m_pointer(new memory_test(40)), 20);
         const int count1 = c1.get_count();
         const int count2 = c2.get_count();
         const mag::push_results result = c1.push(c2);
@@ -129,12 +130,12 @@ const struct {
 }},
 
 { "fixed inv", []() {
-    typedef managed_pointer<memory_test> m_pointer;
     typedef fixed_size_inv<m_pointer, 2, 4> inv_type;
     typedef inv_type::cell_type cell;
     inv_type inv;
     cout << "Empty inventory:" << endl << inv;
     assert(inv.is_empty(0, 0));
+    assert(inv.is_empty());
     {
         cell c(m_pointer(new memory_test(7)), 3);
         inv.push(1, 2, c);
@@ -153,6 +154,12 @@ const struct {
             cout << c << endl;
         }
     }
+}},
+
+{ "dynamic inv", []() {
+    typedef dynamic_inv<m_pointer> inv_type;
+    //typedef inv_type::cell_type cell;
+    inv_type inv(5);
 }},
 
 };

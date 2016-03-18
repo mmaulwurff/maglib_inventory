@@ -1,5 +1,5 @@
-#ifndef MAGLIB_INVENTORY_INVENTORY_ITEM_POINTER_ADAPTER_H
-#define MAGLIB_INVENTORY_INVENTORY_ITEM_POINTER_ADAPTER_H
+#ifndef MAGLIB_INVENTORY_MANAGED_POINTER_H
+#define MAGLIB_INVENTORY_MANAGED_POINTER_H
 
 #include <limits>
 
@@ -9,26 +9,24 @@ template <typename pointed_type>
 class managed_pointer {
 public:
 
-    typedef managed_pointer<pointed_type> this_type;
-
     explicit managed_pointer(pointed_type* const set) : pointer(set) {}
 
     managed_pointer() : pointer(nullptr) {}
 
-    explicit managed_pointer(const this_type& other)
+    explicit managed_pointer(const managed_pointer& other)
         : pointer(new pointed_type(*other)) {}
 
-    explicit managed_pointer(this_type&& other)
+    explicit managed_pointer(managed_pointer&& other)
         : pointer(other.release()) { }
 
     ~managed_pointer() { delete pointer; }
 
     pointed_type* release() const;
 
-    bool operator==(const this_type& other) const;
-    bool operator!=(const this_type& other) const;
+    bool operator==(const managed_pointer& other) const;
+    bool operator!=(const managed_pointer& other) const;
 
-    managed_pointer<pointed_type>& operator=(const this_type& other);
+    managed_pointer<pointed_type>& operator=(const managed_pointer& other);
 
     const pointed_type& operator* () const { return *pointer; }
     const pointed_type* operator->() const { return  pointer; }
@@ -86,4 +84,4 @@ std::ostream& operator<<(std::ostream& str, const mag::managed_pointer<P>& p) {
     return (str << p.get());
 }
 
-#endif // MAGLIB_INVENTORY_INVENTORY_ITEM_POINTER_ADAPTER_H
+#endif // MAGLIB_INVENTORY_MANAGED_POINTER_H

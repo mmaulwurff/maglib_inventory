@@ -2,7 +2,9 @@
 #define MAGLIB_INVENTORY_INVENTORY_H
 
 #include "inv_cell.h"
+#include "t_iterator.h"
 #include <ostream>
+#include <algorithm>
 
 namespace mag {
 
@@ -19,30 +21,21 @@ public:
     const content_type& show(int row, int col) const;
     int get_count(int row, int col) const;
     bool is_empty(int row, int col) const;
+    bool is_empty() const;
 
     const cell_type& show_cell(const int row, const int col) const;
 
     push_results push(int row, int col, cell_type& pushed);
     cell_type pop(int row, int col, int count);
 
-    class iterator {
-    public:
-        iterator& operator++() { do ++i; while (skip()); return *this; }
-        bool operator==(const iterator& o) const { return i == o.i; }
-        bool operator!=(const iterator& o) const { return i != o.i; }
-        cell_type& operator*() { return *i; }
-    private:
-        iterator(cell_type* const begin, const cell_type* const end)
-            : i(begin), e(end) { while (skip()) ++i; }
-        bool skip() const { return (i->get_count() == 0 && i != e); }
-        cell_type* i;
-        const cell_type* const e;
-        friend iterator fixed_size_inv<content_type, rows, cols, max>::begin();
-        friend iterator fixed_size_inv<content_type, rows, cols, max>::end();
-    };
+    typedef mag_detail::t_iterator<cell_type*, fixed_size_inv> iterator;
+    typedef mag_detail::t_iterator<const cell_type*, fixed_size_inv> c_iterator;
 
-    iterator begin() { return iterator(container, container + size); }
-    iterator end()   { return iterator(container + size, container + size); }
+    iterator begin() { return iterator(container, get_end()); }
+    iterator end()   { return iterator(get_end(), get_end()); }
+
+    c_iterator cbegin() const { return c_iterator(container, get_cend()); }
+    c_iterator cend()   const { return c_iterator(get_cend(), get_cend()); }
 
 private:
 
@@ -50,6 +43,9 @@ private:
 
     cell_type& show_cell(const int row, const int col)
         { return container[index_at(row, col)]; }
+
+    const cell_type* get_cend() const { return container + size; }
+    cell_type* get_end() { return container + size; }
 
     static const int size = rows * cols;
 
@@ -90,6 +86,12 @@ int fixed_size_inv<c_t, R, C, m>::get_count(const int r, const int c) const {
 template <typename c_t, int R, int C, int m>
 bool fixed_size_inv<c_t, R, C, m>::is_empty(const int r, const int c) const {
     return (get_count(r, c) == 0);
+}
+
+template <typename c_t, int R, int C, int m>
+bool fixed_size_inv<c_t, R, C, m>::is_empty() const {
+    return std::all_of( cbegin(), cend()
+                      , [](const auto& cell) { return cell.is_empty(); } );
 }
 
 } // namespace mag;

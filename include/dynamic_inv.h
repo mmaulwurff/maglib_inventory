@@ -2,6 +2,7 @@
 #define MAGLIB_INVENTORY_DYNAMIC_INV_H
 
 #include "inv_cell.h"
+#include "t_iterator.h"
 #include <vector>
 
 namespace mag {
@@ -21,32 +22,29 @@ public:
     push_results push(int i, cell_type& pushed);
     cell_type pop(int i, int count);
 
-    class iterator {
-    public:
-        iterator& operator++() { do ++i; while (skip()); return *this; }
-        bool operator==(const iterator& o) const { return i == o.i; }
-        bool operator!=(const iterator& o) const { return i != o.i; }
-        cell_type& operator*() { return *i; }
-    private:
-        typedef std::vector<cell_type>::iterator v_it;
-        iterator(const v_it& begin, const v_it& end)
-            : i(begin), e(end) { while (skip()) ++i; }
-        bool skip() const { return (i->get_count() == 0 && i != e); }
-        v_it i;
-        const v_it e;
-    };
+    typedef std::vector<cell_type> container_type;
+    typedef mag_detail::t_iterator<typename container_type::iterator,
+        dynamic_inv> iterator;
+    typedef mag_detail::t_iterator<typename container_type::const_iterator,
+        dynamic_inv> c_iterator;
+
+    iterator begin() const { return iterator(inv.begin(), inv.end()); }
+    iterator end()   const { return iterator(inv.end(),   inv.end()); }
+
+    c_iterator cbegin() const { return c_iterator(inv.begin(), inv.end()); }
+    c_iterator cend()   const { return c_iterator(inv.end(),   inv.end()); }
 
 private:
 
-    std::vector<cell_type> inventory;
+    container_type inv;
 
 };
 
 template <typename cell_type>
 dynamic_inv<cell_type>::dynamic_inv(const size_t size)
-    : inventory(size)
+    : inv(size)
 {}
 
-};
+}
 
 #endif //MAGLIB_INVENTORY_DYNAMIC_INV_H

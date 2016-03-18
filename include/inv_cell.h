@@ -26,8 +26,6 @@ template <typename content_type, int max_stack_size = 1>
 class inv_cell {
 public:
 
-    typedef inv_cell<content_type, max_stack_size> this_type;
-
     inv_cell() : count(0), content() {}
 
     inv_cell(const content_type& init, int count);
@@ -39,10 +37,11 @@ public:
     /** Tries to push some other item to this item.
      *  It is possible for other item to not fit.
      *  @returns remainder of other item that doesn't fit. */
-    push_results push(this_type& other);
-    this_type pop(int count);
+    push_results push(inv_cell& other);
+    inv_cell pop(int count);
 
     int get_count() const { return count; }
+    bool is_empty() const { return count == 0; }
     const content_type& showContent() const { return content; }
 
 private:
