@@ -16,6 +16,7 @@ public:
     ~memory_test() { --c; if (o) cout << "MT with i - " << j << endl; }
     int get_max_stack_size() const { return max_stack; }
     bool operator==(const memory_test& o) const { return j == o.j; }
+    int get_j() const { return j; }
     static const int max_stack = 37;
     static int c;
 private:
@@ -24,6 +25,10 @@ private:
     static int i;
     const  int j;
 }; int memory_test::i = 0; int memory_test::c = 0;
+
+ostream& operator<<(ostream& str, const memory_test& m) {
+    return (str << m.get_j());
+}
 
 typedef managed_pointer<memory_test> m_pointer;
 
@@ -52,7 +57,7 @@ const struct {
         assert(result_two == mag::fit_full);
     } {
         two_int_cell item_popped = item.pop(1);
-        assert(item_popped.showContent() == 5);
+        assert(item_popped.show_content() == 5);
         assert(item.get_count() == 1);
     } {
         two_int_cell item_push(5, 2);
@@ -123,7 +128,7 @@ const struct {
         assert(result == mag::fit_partial);
     } {
         cell c3 = c1.pop(10);
-        assert(c1.showContent().get() != nullptr);
+        assert(c1.show_content().get() != nullptr);
         assert(c3.get_count() == 10);
     }
     cout << "pointer cell after: " << c1 << endl;
@@ -133,7 +138,6 @@ const struct {
     typedef fixed_size_inv<m_pointer, 2, 4> inv_type;
     typedef inv_type::cell_type cell;
     inv_type inv;
-    cout << "Empty inventory:" << endl << inv;
     assert(inv.is_empty(0, 0));
     assert(inv.is_empty());
     {
@@ -157,9 +161,41 @@ const struct {
 }},
 
 { "dynamic inv", []() {
-    typedef dynamic_inv<m_pointer> inv_type;
+    typedef dynamic_inv<m_pointer, 7> inv_type;
+    typedef inv_type::cell_type cell;
     //typedef inv_type::cell_type cell;
     inv_type inv(5);
+    assert(inv.is_empty(0));
+    assert(inv.is_empty());
+    assert(inv.get_size() == 5);
+    { // push test
+        cell c(m_pointer(new memory_test(13)), 2);
+        const int push_result = inv.push(3, c);
+        assert(push_result == fit_full);
+        assert(inv.get_count(3) == 2);
+    } { // pop test
+        cell p = inv.pop(3, 1);
+        assert(p.get_count() == 1);
+        assert(inv.get_count(3) == 1);
+    } { // show test
+        const m_pointer& m = inv.show_at(3);
+        assert(m.get()->get_j() == 13);
+    } { // unlimited push test
+        // fill inventory
+        for (size_t i = 0; i < inv.get_size(); ++i) {
+            cell c(m_pointer(new memory_test(i)), 1);
+            inv.push(i, c);
+        }
+        const size_t old_size = inv.get_size();
+        cell more(m_pointer(new memory_test(12)), 1);
+        const push_results result = inv.push(more);
+        assert(result == fit_full);
+        assert(inv.get_size() == old_size + 1);
+    } { // resize test
+        inv.resize(10);
+        assert(inv.get_size() == 10);
+        assert(inv.get_count(3) == 1);
+    }
 }},
 
 };

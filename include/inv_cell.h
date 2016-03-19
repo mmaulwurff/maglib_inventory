@@ -42,7 +42,7 @@ public:
 
     int get_count() const { return count; }
     bool is_empty() const { return count == 0; }
-    const content_type& showContent() const { return content; }
+    const content_type& show_content() const { return content; }
 
 private:
 
@@ -103,7 +103,7 @@ int inv_cell<c_t, max>::get_max_stack_size() const {
 
 template <typename c_t, int max>
 std::ostream& operator<<(std::ostream& str, const mag::inv_cell<c_t, max>& c) {
-    return (str << c.showContent() << "x" << c.get_count());
+    return (str << c.show_content() << "x" << c.get_count());
 }
 
 #endif //MAGLIB_INVENTORY_INVENTORY_ITEM_INTERFACE_H

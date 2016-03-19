@@ -81,7 +81,9 @@ int managed_pointer<pointed_type>::get_max_stack_size() const {
 
 template <typename P>
 std::ostream& operator<<(std::ostream& str, const mag::managed_pointer<P>& p) {
-    return (str << p.get());
+    str << p.get();
+    if (p.get()) str << "(" << *(p.get()) << ")";
+    return str;
 }
 
 #endif // MAGLIB_INVENTORY_MANAGED_POINTER_H
