@@ -30,7 +30,7 @@ private:
     t_iterator(const iterated_type& begin, const iterated_type& end)
         : i(begin), e(end) { while (skip()) ++i; }
 
-    bool skip() const { return (i->get_count() == 0 && i != e); }
+    bool skip() const { return (i != e && i->get_count() == 0); }
 
     iterated_type i;
     const iterated_type e;

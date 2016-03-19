@@ -178,6 +178,8 @@ const struct {
         cell p = inv.pop(3, 1);
         assert(p.get_count() == 1);
         assert(inv.get_count(3) == 1);
+        inv.pop(3, 1);
+        assert(inv.get_count(3) == 0);
     } { // show test
         const m_pointer& m = inv.show_at(3);
         assert(m.get()->get_j() == 13);
