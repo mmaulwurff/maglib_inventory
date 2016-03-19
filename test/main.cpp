@@ -46,27 +46,27 @@ const struct {
 
     {
         two_int_cell item2(5, 1);
-        const mag::push_results result = item.push(item2);
+        const fits result = item.push(item2);
         assert(item.get_count() == 1);
-        assert(result == mag::fit_full);
+        assert(result == fits::full);
     } {
         two_int_cell item3(5, 1);
-        const mag::push_results result_two = item.push(item3);
+        const fits result_two = item.push(item3);
         assert(item.get_count() == 2);
         assert(item3.get_count() == 0);
-        assert(result_two == mag::fit_full);
+        assert(result_two == fits::full);
     } {
         two_int_cell item_popped = item.pop(1);
         assert(item_popped.show_content() == 5);
         assert(item.get_count() == 1);
     } {
         two_int_cell item_push(5, 2);
-        const mag::push_results result_push = item.push(item_push);
-        assert(result_push == mag::fit_partial);
+        const fits result_push = item.push(item_push);
+        assert(result_push == fits::partial);
     } {
         two_int_cell item_no_fit(3, 1);
-        const mag::push_results result_no_fit = item.push(item_no_fit);
-        assert(result_no_fit == mag::fit_none);
+        const fits result_no_fit = item.push(item_no_fit);
+        assert(result_no_fit == fits::none);
     }
     cout << "two_int_cell item after: " << item << endl;
 }},
@@ -123,9 +123,9 @@ const struct {
         cell c2(m_pointer(new memory_test(40)), 20);
         const int count1 = c1.get_count();
         const int count2 = c2.get_count();
-        const mag::push_results result = c1.push(c2);
+        const fits result = c1.push(c2);
         assert(c1.get_count() + c2.get_count() == count1 + count2);
-        assert(result == mag::fit_partial);
+        assert(result == fits::partial);
     } {
         cell c3 = c1.pop(10);
         assert(c1.show_content().get() != nullptr);
@@ -172,8 +172,7 @@ const struct {
     assert(inv.get_size() == 5);
     { // push test
         cell c(m_pointer(new memory_test(13)), 2);
-        const int push_result = inv.push(3, c);
-        assert(push_result == fit_full);
+        assert(inv.push(3, c) == fits::full);
         assert(inv.get_count(3) == 2);
     } { // pop test
         cell p = inv.pop(3, 1);
@@ -190,7 +189,7 @@ const struct {
         }
         const size_t old_size = inv.get_size();
         cell more(m_pointer(new memory_test(12)), 1);
-        assert(inv.push(more) == fit_none);
+        assert(inv.push(more) == fits::none);
         inv.push_expand(more);
         assert(inv.get_size() == old_size + 1);
     } { // resize test

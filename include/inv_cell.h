@@ -20,7 +20,7 @@ template <typename T, int max> struct get_max_stack_size_inner<T, max, 1>
 }
 
 namespace mag {
-    enum push_results { fit_none, fit_partial, fit_full };
+    enum class fits { none, partial, full };
 
 template <typename content_type, int max_stack_size = 1>
 class inv_cell {
@@ -39,7 +39,7 @@ public:
     /** Tries to push some other item to this item.
      *  It is possible for other item to not fit.
      *  @returns remainder of other item that doesn't fit. */
-    push_results push(inv_cell& other);
+    fits push(inv_cell& other);
     inv_cell pop(int count);
 
     int get_count() const { return count; }
@@ -53,17 +53,17 @@ private:
 };
 
 template <typename c_t, int max>
-push_results inv_cell<c_t, max>::push(inv_cell<c_t, max>& pushed) {
-    if (pushed.count == 0) return mag::fit_full;
+fits inv_cell<c_t, max>::push(inv_cell<c_t, max>& pushed) {
+    if (pushed.count == 0) return mag::fits::full;
 
     if (count == 0) {
         content = pushed.content;
         count   = pushed.count;
         pushed.count = 0;
-        return mag::fit_full;
+        return mag::fits::full;
     }
 
-    if (pushed.content != content) return mag::fit_none;
+    if (pushed.content != content) return mag::fits::none;
 
     const int max_stack_size = get_max_stack_size();
     const int count_sum = pushed.count + count;
@@ -76,8 +76,8 @@ push_results inv_cell<c_t, max>::push(inv_cell<c_t, max>& pushed) {
         count        = d.rem;
     }
     return ( (pushed.count == 0)
-             ? mag::fit_full
-             : mag::fit_partial );
+             ? mag::fits::full
+             : mag::fits::partial );
 }
 
 template <typename c_t, int max>

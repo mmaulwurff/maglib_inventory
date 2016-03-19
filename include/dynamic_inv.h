@@ -24,8 +24,8 @@ public:
     bool is_empty(int i) const;
     bool is_empty() const;
 
-    push_results push(int i, cell_type& pushed);
-    push_results push(cell_type& pushed);
+    fits push(int i, cell_type& pushed);
+    fits push(cell_type& pushed);
     void push_expand(cell_type& pushed);
 
     cell_type pop(int i, int count);
@@ -77,25 +77,25 @@ size_t dynamic_inv<cell_type, max>::get_size() const {
 }
 
 template <typename c_t, int m>
-push_results dynamic_inv<c_t, m>::push(const int i, inv_cell<c_t, m>& pushed) {
+fits dynamic_inv<c_t, m>::push(const int i, inv_cell<c_t, m>& pushed) {
     return show_cell(i).push(pushed);
 }
 
 template <typename c_t, int m>
-push_results dynamic_inv<c_t, m>::push(inv_cell<c_t, m>& pushed) {
+fits dynamic_inv<c_t, m>::push(inv_cell<c_t, m>& pushed) {
     const int old_count = pushed.get_count();
     for (dynamic_inv<c_t, m>::cell_type& c : inv) {
-        if (c.push(pushed) == fit_full) return fit_full;
+        if (c.push(pushed) == fits::full) return fits::full;
     }
     return (old_count == pushed.get_count())
-           ? fit_none
-           : fit_partial;
+           ? fits::none
+           : fits::partial;
 }
 
 template <typename c_t, int m>
 void dynamic_inv<c_t, m>::push_expand(cell_type& pushed) {
     for (dynamic_inv<c_t, m>::cell_type& c : inv) {
-        if (c.push(pushed) == fit_full) return;
+        if (c.push(pushed) == fits::full) return;
     }
     resize(get_size() + 1);
     inv.back().push(pushed);
