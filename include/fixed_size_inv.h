@@ -26,6 +26,8 @@ public:
     const cell_type& show_cell(const int row, const int col) const;
 
     push_results push(int row, int col, cell_type& pushed);
+    push_results push(cell_type& pushed);
+
     cell_type pop(int row, int col, int count);
 
     typedef mag_detail::t_iterator<cell_type*, fixed_size_inv> iterator;
@@ -63,13 +65,24 @@ show_cell(const int row, const int col) const {
 
 template <typename c_t, int R, int C, int m>
 const c_t& fixed_size_inv<c_t, R, C, m>::show(const int r, const int c) const {
-    return show_cell(r, c).showContent();
+    return show_cell(r, c).show_content();
 }
 
 template <typename c_t, int R, int C, int m>
 push_results fixed_size_inv<c_t, R, C, m>::
 push(const int row, const int col, inv_cell<c_t, m>& pushed) {
     return show_cell(row, col).push(pushed);
+}
+
+template <typename c_t, int R, int C, int m>
+push_results fixed_size_inv<c_t, R, C, m>:: push(inv_cell<c_t, m>& pushed) {
+    const int old_count = pushed.get_count();
+    for (auto& cell : container) {
+        if (cell.push(pushed) == fit_full) return fit_full;
+    }
+    return (old_count == pushed.get_count())
+           ? fit_none
+           : fit_partial;
 }
 
 template <typename c_t, int R, int C, int m>

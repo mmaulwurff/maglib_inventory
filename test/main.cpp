@@ -149,10 +149,12 @@ const struct {
     } {
         cell c2(m_pointer(new memory_test(5)), 4);
         inv.push(1, 2, c2);
+        cell c3(m_pointer(new memory_test(9)), 1);
+        inv.push(c3);
         cout << "Push inventory:" << endl << inv;
     } {
         cell c3 = inv.pop(1, 2, 1);
-        cout << "Pop inventory:" << endl << inv;
+        assert(inv.get_count(1, 2) == 2);
     } {
         for (const cell& c: inv) {
             cout << c << endl;
@@ -188,8 +190,8 @@ const struct {
         }
         const size_t old_size = inv.get_size();
         cell more(m_pointer(new memory_test(12)), 1);
-        const push_results result = inv.push(more);
-        assert(result == fit_full);
+        assert(inv.push(more) == fit_none);
+        inv.push_expand(more);
         assert(inv.get_size() == old_size + 1);
     } { // resize test
         inv.resize(10);

@@ -26,6 +26,8 @@ public:
 
     push_results push(int i, cell_type& pushed);
     push_results push(cell_type& pushed);
+    void push_expand(cell_type& pushed);
+
     cell_type pop(int i, int count);
 
     typedef std::vector<cell_type> container_type;
@@ -81,12 +83,22 @@ push_results dynamic_inv<c_t, m>::push(const int i, inv_cell<c_t, m>& pushed) {
 
 template <typename c_t, int m>
 push_results dynamic_inv<c_t, m>::push(inv_cell<c_t, m>& pushed) {
+    const int old_count = pushed.get_count();
     for (dynamic_inv<c_t, m>::cell_type& c : inv) {
         if (c.push(pushed) == fit_full) return fit_full;
     }
+    return (old_count == pushed.get_count())
+           ? fit_none
+           : fit_partial;
+}
+
+template <typename c_t, int m>
+void dynamic_inv<c_t, m>::push_expand(cell_type& pushed) {
+    for (dynamic_inv<c_t, m>::cell_type& c : inv) {
+        if (c.push(pushed) == fit_full) return;
+    }
     resize(get_size() + 1);
     inv.back().push(pushed);
-    return fit_full;
 }
 
 template <typename c_t, int m>

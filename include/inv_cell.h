@@ -24,6 +24,8 @@ namespace mag {
 
 template <typename content_type, int max_stack_size = 1>
 class inv_cell {
+    static_assert(max_stack_size >= 1, "minimal stack size is 1");
+
 public:
 
     inv_cell() : count(0), content() {}
