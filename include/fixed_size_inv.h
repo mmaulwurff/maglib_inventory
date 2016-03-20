@@ -30,6 +30,8 @@ public:
 
     cell_type pop(int row, int col, int count);
 
+    void sort();
+
     typedef mag_detail::t_iterator<cell_type*, fixed_size_inv> iterator;
     typedef mag_detail::t_iterator<const cell_type*, fixed_size_inv> c_iterator;
 
@@ -105,6 +107,11 @@ template <typename c_t, int R, int C, int m>
 bool fixed_size_inv<c_t, R, C, m>::is_empty() const {
     return std::all_of( cbegin(), cend()
                       , [](const auto& cell) { return cell.is_empty(); } );
+}
+
+template <typename c_t, int R, int C, int m>
+void fixed_size_inv<c_t, R, C, m>::sort() {
+    std::sort(std::begin(container), std::end(container));
 }
 
 } // namespace mag;

@@ -46,6 +46,8 @@ public:
     bool is_empty() const { return count == 0; }
     const content_type& show_content() const { return content; }
 
+    bool operator<(const inv_cell& other) const;
+
 private:
 
     int count;
@@ -92,13 +94,18 @@ inv_cell<c_t, max>::inv_cell(const c_t& init, const int _count)
     : count(_count)
     , content(init)
 {
-    assert(count <= get_max_stack_size());
+    assert(0 < count && count <= get_max_stack_size());
 }
 
 template <typename c_t, int max>
 int inv_cell<c_t, max>::get_max_stack_size() const {
     return mag_detail::get_max_stack_size_inner<c_t, max,
         HAS_METHOD(c_t, get_max_stack_size, int())>::get(content);
+}
+
+template <typename c_t, int max>
+bool inv_cell<c_t, max>::operator<(const inv_cell<c_t, max>& other) const {
+    return content < other.content;
 }
 
 } // namespace mag;

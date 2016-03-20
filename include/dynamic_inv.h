@@ -20,6 +20,8 @@ public:
     void resize(size_t size);
 
     const content_type& show_at(int i) const;
+    const cell_type& show_cell(const int i) const { return inv[i]; }
+
     int get_count(int i) const;
     bool is_empty(int i) const;
     bool is_empty() const;
@@ -29,6 +31,8 @@ public:
     void push_expand(cell_type& pushed);
 
     cell_type pop(int i, int count);
+
+    void sort();
 
     typedef std::vector<cell_type> container_type;
     typedef mag_detail::t_iterator<typename container_type::iterator,
@@ -116,6 +120,21 @@ void dynamic_inv<c_t, m>::resize(const size_t size) {
     inv.resize(size);
 }
 
+template <typename c_t, int m>
+void dynamic_inv<c_t, m>::sort() {
+    std::sort(inv.begin(), inv.end());
+}
+
+}
+
+template <typename c_t, int m>
+std::ostream& operator<<( std::ostream& stream
+                        , const mag::dynamic_inv<c_t, m>& inv)
+{
+    for (size_t i = 0; i < inv.get_size(); ++i) {
+        stream << inv.show_cell(i) << std::endl;
+    }
+    return stream;
 }
 
 #endif //MAGLIB_INVENTORY_DYNAMIC_INV_H

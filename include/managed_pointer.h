@@ -25,6 +25,7 @@ public:
 
     bool operator==(const managed_pointer& other) const;
     bool operator!=(const managed_pointer& other) const;
+    bool operator< (const managed_pointer& other) const;
 
     managed_pointer<pointed_type>& operator=(const managed_pointer& other);
 
@@ -69,6 +70,13 @@ bool managed_pointer<p>::operator==(const managed_pointer<p>& other) const {
 template <typename p>
 bool managed_pointer<p>::operator!=(const managed_pointer<p>& other) const {
     return (not operator==(other));
+}
+
+template <typename p>
+bool managed_pointer<p>::operator<(const managed_pointer<p>& other) const {
+    if (pointer == other.pointer) return true;
+    if (pointer == nullptr || other.pointer == nullptr) return false;
+    return (*pointer < *(other.pointer));
 }
 
 template <typename pointed_type>

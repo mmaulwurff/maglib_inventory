@@ -16,6 +16,7 @@ public:
     ~memory_test() { --c; if (o) cout << "MT with i - " << j << endl; }
     int get_max_stack_size() const { return max_stack; }
     bool operator==(const memory_test& o) const { return j == o.j; }
+    bool operator<(const memory_test& o) const { return j < o.j; }
     int get_j() const { return j; }
     static const int max_stack = 37;
     static int c;
@@ -159,13 +160,14 @@ const struct {
         for (const cell& c: inv) {
             cout << c << endl;
         }
+    } { // sort test
+        inv.sort();
     }
 }},
 
 { "dynamic inv", []() {
     typedef dynamic_inv<m_pointer, 7> inv_type;
     typedef inv_type::cell_type cell;
-    //typedef inv_type::cell_type cell;
     inv_type inv(5);
     assert(inv.is_empty(0));
     assert(inv.is_empty());
@@ -186,7 +188,7 @@ const struct {
     } { // unlimited push test
         // fill inventory
         for (size_t i = 0; i < inv.get_size(); ++i) {
-            cell c(m_pointer(new memory_test(i)), 1);
+            cell c(m_pointer(new memory_test(inv.get_size() - i)), 1);
             inv.push(i, c);
         }
         const size_t old_size = inv.get_size();
@@ -198,6 +200,8 @@ const struct {
         inv.resize(10);
         assert(inv.get_size() == 10);
         assert(inv.get_count(3) == 1);
+    } { // sort test
+        inv.sort();
     }
 }},
 
