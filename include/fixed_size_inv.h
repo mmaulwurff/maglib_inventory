@@ -84,7 +84,7 @@ fits fixed_size_inv<c_t, R, C, m>:: push(inv_cell<c_t, m>& pushed) {
     }
     return (old_count == pushed.get_count())
            ? fits::none
-           : fits::partial;
+           : fits::part;
 }
 
 template <typename c_t, int R, int C, int m>

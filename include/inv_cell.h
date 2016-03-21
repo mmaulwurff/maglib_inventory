@@ -2,7 +2,8 @@
 #define MAGLIB_INVENTORY_INVENTORY_ITEM_INTERFACE_H
 
 #include "has_method.h"
-#include <cassert>
+#include "mag_assert.h"
+
 #include <ostream>
 #include <stdlib.h>
 
@@ -20,7 +21,12 @@ template <typename T, int max> struct get_max_stack_size_inner<T, max, 1>
 }
 
 namespace mag {
-    enum class fits { none, partial, full };
+    enum class fits { none, part, full };
+
+    std::ostream& operator<<(std::ostream& str, const fits fit) {
+        static const char* const names[] = { "none", "part", "full" };
+        return str << names[static_cast<int>(fit)];
+    }
 
 template <typename content_type, int max_stack_size = 1>
 class inv_cell {
@@ -30,7 +36,7 @@ public:
 
     inv_cell() : count(0), content() {}
 
-    inv_cell(const content_type& init, int count);
+    inv_cell(const content_type& init, int count = 1);
 
     /** Shows how much of this item can fit in a stack (one cell in inventory).
      * @returns maximum number of items in stack. */
@@ -79,13 +85,13 @@ fits inv_cell<c_t, max>::push(inv_cell<c_t, max>& pushed) {
     }
     return ( (pushed.count == 0)
              ? mag::fits::full
-             : mag::fits::partial );
+             : mag::fits::part );
 }
 
 template <typename c_t, int max>
 inv_cell<c_t, max> inv_cell<c_t, max>::pop(const int pop_count) {
+    mag_assert(count >= pop_count);
     count -= pop_count;
-    assert(count >= 0);
     return inv_cell<c_t, max>(content, pop_count);
 }
 
@@ -94,7 +100,8 @@ inv_cell<c_t, max>::inv_cell(const c_t& init, const int _count)
     : count(_count)
     , content(init)
 {
-    assert(0 < count && count <= get_max_stack_size());
+    mag_assert(0 < count);
+    mag_assert(    count <= get_max_stack_size());
 }
 
 template <typename c_t, int max>

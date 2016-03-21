@@ -5,16 +5,23 @@
 
 namespace mag {
 
-template <typename pointed_type>
+template <typename T>
+struct default_copier {
+    T* operator()(const T& origin) {
+        return new T(origin);
+    }
+};
+
+template <typename pointed_type, typename copier = default_copier<pointed_type>>
 class managed_pointer {
 public:
 
-    explicit managed_pointer(pointed_type* const set) : pointer(set) {}
+    managed_pointer(pointed_type* const set) : pointer(set) {}
 
     managed_pointer() : pointer(nullptr) {}
 
     explicit managed_pointer(const managed_pointer& other)
-        : pointer(new pointed_type(*other)) {}
+        : pointer(copier()(*other)) {}
 
     explicit managed_pointer(managed_pointer&& other)
         : pointer(other.release()) { }
@@ -27,7 +34,7 @@ public:
     bool operator!=(const managed_pointer& other) const;
     bool operator< (const managed_pointer& other) const;
 
-    managed_pointer<pointed_type>& operator=(const managed_pointer& other);
+    managed_pointer& operator=(const managed_pointer& other);
 
     const pointed_type& operator* () const { return *pointer; }
     const pointed_type* operator->() const { return  pointer; }
@@ -37,21 +44,23 @@ public:
 
     int get_max_stack_size() const;
 
+    static const int null_max_stack_size = std::numeric_limits<int>::max();
+
 private:
 
     mutable pointed_type* pointer;
 };
 
-template <typename pointed_type>
-pointed_type* managed_pointer<pointed_type>::release() const {
-    pointed_type* const ret = pointer;
+template <typename p, typename c>
+p* managed_pointer<p, c>::release() const {
+    p* const ret = pointer;
     pointer = nullptr;
     return ret;
 }
 
-template <typename pointed_type>
-managed_pointer<pointed_type>& managed_pointer<pointed_type>::operator=(
-    const managed_pointer& other) {
+template <typename p, typename c>
+managed_pointer<p, c>&
+managed_pointer<p, c>::operator=(const managed_pointer<p, c>& other) {
     if (pointer != other.pointer) {
         delete pointer;
         pointer = other.pointer;
@@ -60,38 +69,40 @@ managed_pointer<pointed_type>& managed_pointer<pointed_type>::operator=(
     return *this;
 }
 
-template <typename p>
-bool managed_pointer<p>::operator==(const managed_pointer<p>& other) const {
-    if (pointer == other.pointer) return true;
-    if (pointer == nullptr || other.pointer == nullptr) return false;
-    return (*pointer == *(other.pointer));
+template <typename p, typename c>
+bool managed_pointer<p, c>::operator==(const managed_pointer<p, c>& o) const {
+    if (pointer == o.pointer) return true;
+    if (pointer == nullptr || o.pointer == nullptr) return false;
+    return (*pointer == *(o.pointer));
 }
 
-template <typename p>
-bool managed_pointer<p>::operator!=(const managed_pointer<p>& other) const {
+template <typename p, typename c>
+bool
+managed_pointer<p, c>::operator!=(const managed_pointer<p, c>& other) const {
     return (not operator==(other));
 }
 
-template <typename p>
-bool managed_pointer<p>::operator<(const managed_pointer<p>& other) const {
-    if (pointer == other.pointer) return true;
-    if (pointer == nullptr || other.pointer == nullptr) return false;
-    return (*pointer < *(other.pointer));
+template <typename p, typename c>
+bool managed_pointer<p, c>::operator<(const managed_pointer<p, c>& o) const {
+    if (pointer == o.pointer) return true;
+    if (pointer == nullptr || o.pointer == nullptr) return false;
+    return (*pointer < *(o.pointer));
 }
 
-template <typename pointed_type>
-int managed_pointer<pointed_type>::get_max_stack_size() const {
-    if (pointer == nullptr) return std::numeric_limits<int>::max();
+template <typename p, typename c>
+int managed_pointer<p, c>::get_max_stack_size() const {
+    if (pointer == nullptr) return null_max_stack_size;
     return pointer->get_max_stack_size();
 }
 
 } // namespace mag
 
-template <typename P>
-std::ostream& operator<<(std::ostream& str, const mag::managed_pointer<P>& p) {
-    str << p.get();
-    if (p.get()) str << "(" << *(p.get()) << ")";
-    return str;
+template <typename P, typename c>
+std::ostream&
+operator<<(std::ostream& s, const mag::managed_pointer<P, c>& p) {
+    s << p.get();
+    if (p.get()) s << "(" << *(p.get()) << ")";
+    return s;
 }
 
 #endif // MAGLIB_INVENTORY_MANAGED_POINTER_H
