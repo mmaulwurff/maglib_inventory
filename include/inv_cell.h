@@ -2,10 +2,9 @@
 #define MAGLIB_INVENTORY_INVENTORY_ITEM_INTERFACE_H
 
 #include "has_method.h"
-#include "mag_assert.h"
 
 #include <ostream>
-#include <stdlib.h>
+#include <cassert>
 
 HAS_METHOD_INIT(get_max_stack_size)
 
@@ -90,7 +89,7 @@ fits inv_cell<c_t, max>::push(inv_cell<c_t, max>& pushed) {
 
 template <typename c_t, int max>
 inv_cell<c_t, max> inv_cell<c_t, max>::pop(const int pop_count) {
-    mag_assert(count >= pop_count);
+    assert(count >= pop_count);
     count -= pop_count;
     if (count == 0) {
         c_t result_content(std::move(content));
@@ -105,8 +104,8 @@ inv_cell<c_t, max>::inv_cell(const c_t& init, const int _count)
     : count(_count)
     , content(init)
 {
-    mag_assert(0 < count);
-    mag_assert(    count <= get_max_stack_size());
+    assert(0 < count);
+    assert(    count <= get_max_stack_size());
 }
 
 template <typename c_t, int max>
