@@ -232,6 +232,15 @@ const struct {
         cell p = inv.pop(0, 1);
         assert(p.get_count() == 1);
         assert(inv.is_empty());
+        const m_pointer& remainder = inv.content_at(0);
+        assert(remainder.get() == nullptr);
+
+    } { // int reset test
+        int_inv_type inv(5);
+        inv.push(int_cell(3));
+        int_cell p = inv.pop(0, 1);
+        assert(p.show_content() == 3);
+        assert(inv.content_at(0) == 0);
 
     } { // show test
         dynamic_inv<int, 10> inv(5);

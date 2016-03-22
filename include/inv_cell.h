@@ -92,6 +92,11 @@ template <typename c_t, int max>
 inv_cell<c_t, max> inv_cell<c_t, max>::pop(const int pop_count) {
     mag_assert(count >= pop_count);
     count -= pop_count;
+    if (count == 0) {
+        c_t result_content(std::move(content));
+        content = c_t();
+        return inv_cell<c_t, max>(result_content, pop_count);
+    }
     return inv_cell<c_t, max>(content, pop_count);
 }
 
