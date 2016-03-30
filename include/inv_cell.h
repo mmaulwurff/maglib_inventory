@@ -22,11 +22,6 @@ template <typename T, int max> struct get_max_stack_size_inner<T, max, 1>
 namespace mag {
     enum class fits { none, part, full };
 
-    std::ostream& operator<<(std::ostream& str, const fits fit) {
-        static const char* const names[] = { "none", "part", "full" };
-        return str << names[static_cast<int>(fit)];
-    }
-
 template <typename content_type, int max_stack_size = 1>
 class inv_cell {
     static_assert(max_stack_size >= 1, "minimal stack size is 1");
@@ -41,10 +36,12 @@ public:
      * @returns maximum number of items in stack. */
     int get_max_stack_size() const;
 
-    /** Tries to push some other item to this item.
-     *  It is possible for other item to not fit.
-     *  @returns remainder of other item that doesn't fit. */
-    fits push(inv_cell& other);
+    fits can_push(const inv_cell& other) const;
+
+    /** Pushes other cell contents into this cell, updates counts.
+     * @pre can_push(other) should return fits::full or fits::part. */
+    void push(inv_cell& other);
+
     inv_cell pop(int count);
 
     int get_count() const { return count; }
@@ -60,31 +57,36 @@ private:
 };
 
 template <typename c_t, int max>
-fits inv_cell<c_t, max>::push(inv_cell<c_t, max>& pushed) {
-    if (pushed.count == 0) return mag::fits::full;
+fits inv_cell<c_t, max>::can_push(const inv_cell& cell) const {
+    assert(cell.count > 0);
 
+    if (count == 0) return fits::full;
+    if (cell.content != content) return fits::none;
+
+    const int max_stack_size = get_max_stack_size();
+    if (count == max_stack_size) return fits::none;
+
+    return ( (cell.count + count <= max_stack_size)
+        ? fits::full
+        : fits::part );
+}
+
+template <typename c_t, int max>
+void inv_cell<c_t, max>::push(inv_cell<c_t, max>& pushed) {
     if (count == 0) {
         content = pushed.content;
         count   = pushed.count;
         pushed.count = 0;
-        return mag::fits::full;
-    }
-
-    if (pushed.content != content) return mag::fits::none;
-
-    const int max_stack_size = get_max_stack_size();
-    const int count_sum = pushed.count + count;
-    const div_t d = div(count_sum, max_stack_size);
-    if (d.quot > 0) {
-        pushed.count = d.rem;
-        count        = max_stack_size;
     } else {
-        pushed.count = 0;
-        count        = d.rem;
+        const int max_stack_size = get_max_stack_size();
+        if (count + pushed.count <= max_stack_size) {
+            count       += pushed.count;
+            pushed.count = 0;
+        } else {
+            pushed.count -= max_stack_size - count;
+            count         = max_stack_size;
+        }
     }
-    return ( (pushed.count == 0)
-             ? mag::fits::full
-             : mag::fits::part );
 }
 
 template <typename c_t, int max>
@@ -124,6 +126,11 @@ bool inv_cell<c_t, max>::operator<(const inv_cell<c_t, max>& other) const {
 template <typename c_t, int max>
 std::ostream& operator<<(std::ostream& str, const mag::inv_cell<c_t, max>& c) {
     return (str << c.show_content() << "x" << c.get_count());
+}
+
+std::ostream& operator<<(std::ostream& str, const mag::fits fit) {
+    static const char* const names[] = { "none", "part", "full" };
+    return str << names[static_cast<int>(fit)];
 }
 
 #endif //MAGLIB_INVENTORY_INVENTORY_ITEM_INTERFACE_H

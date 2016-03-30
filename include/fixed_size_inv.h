@@ -10,43 +10,42 @@ namespace mag {
 
 template <typename content_type, int rows, int cols, int max = 1>
 class fixed_size_inv {
-    static_assert(rows >= 1 && cols >=1, "minimal inventory sizes");
-
 public:
 
     typedef inv_cell<content_type, max> cell_type;
+    typedef mag_detail::t_iterator<cell_type*, fixed_size_inv> iterator;
+    typedef mag_detail::t_iterator<const cell_type*, fixed_size_inv> c_iterator;
 
     fixed_size_inv();
 
-    const content_type& show(int row, int col) const;
+    const cell_type&    show_cell   (int row, int col) const;
+    const content_type& show_content(int row, int col) const;
+
     int get_count(int row, int col) const;
     bool is_empty(int row, int col) const;
     bool is_empty() const;
 
-    const cell_type& show_cell(const int row, const int col) const;
+    fits can_push(int row, int col, const cell_type& pushed) const;
+    fits can_push(const cell_type& pushed) const;
 
-    fits push(int row, int col, cell_type& pushed);
-    fits push(cell_type& pushed);
+    void push(int row, int col, cell_type& pushed);
+    void push(cell_type& pushed);
 
     cell_type pop(int row, int col, int count);
-
-    void sort();
-
-    typedef mag_detail::t_iterator<cell_type*, fixed_size_inv> iterator;
-    typedef mag_detail::t_iterator<const cell_type*, fixed_size_inv> c_iterator;
 
     iterator begin() { return iterator(container, get_end()); }
     iterator end()   { return iterator(get_end(), get_end()); }
 
-    c_iterator cbegin() const { return c_iterator(container, get_cend()); }
-    c_iterator cend()   const { return c_iterator(get_cend(), get_cend()); }
+    c_iterator begin() const { return c_iterator(container, get_cend()); }
+    c_iterator end()   const { return c_iterator(get_cend(), get_cend()); }
 
 private:
 
+    static_assert(rows >= 1 && cols >=1, "minimal inventory sizes");
+
     static int index_at(const int r, const int c) { return r * cols + c; }
 
-    cell_type& show_cell(const int row, const int col)
-        { return container[index_at(row, col)]; }
+    cell_type& show_cell(const int row, const int col);
 
     const cell_type* get_cend() const { return container + size; }
     cell_type* get_end() { return container + size; }
@@ -56,63 +55,71 @@ private:
     cell_type container[size];
 };
 
-template <typename c_t, int R, int C, int m>
-fixed_size_inv<c_t, R, C, m>::fixed_size_inv() : container() {}
+#define T template <typename c_t, int rows, int cols, int m>
+#define C fixed_size_inv<c_t, rows, cols, m>
 
-template <typename c_t, int R, int C, int m>
-const inv_cell<c_t, m>& fixed_size_inv<c_t, R, C, m>::
-show_cell(const int row, const int col) const {
-    return container[index_at(row, col)];
-}
+T C::fixed_size_inv() : container() {}
 
-template <typename c_t, int R, int C, int m>
-const c_t& fixed_size_inv<c_t, R, C, m>::show(const int r, const int c) const {
+T const typename C::cell_type& C::show_cell(const int row, const int col) const
+    { return container[index_at(row, col)]; }
+T       typename C::cell_type& C::show_cell(const int row, const int col)
+    { return container[index_at(row, col)]; }
+
+T const c_t& C::show_content(const int r, const int c) const {
     return show_cell(r, c).show_content();
 }
 
-template <typename c_t, int R, int C, int m>
-fits fixed_size_inv<c_t, R, C, m>::
-push(const int row, const int col, inv_cell<c_t, m>& pushed) {
-    return show_cell(row, col).push(pushed);
+T fits C::can_push(const int r, const int c, const cell_type& pushed) const {
+    return show_cell(r, c).can_push(pushed);
 }
 
-template <typename c_t, int R, int C, int m>
-fits fixed_size_inv<c_t, R, C, m>:: push(inv_cell<c_t, m>& pushed) {
-    const int old_count = pushed.get_count();
-    for (auto& cell : container) {
-        if (cell.push(pushed) == fits::full) return fits::full;
+T fits C::can_push(const cell_type& pushed) const {
+    int count = pushed.get_count();
+    for (const C::cell_type& cell : container) {
+        switch (cell.can_push(pushed)) {
+        case fits::none: break;
+        case fits::part:
+            count -= cell.get_max_stack_size() - cell.get_count();
+            if (count <= 0) return fits::full;
+            break;
+        case fits::full: return fits::full;
+        }
     }
-    return (old_count == pushed.get_count())
-           ? fits::none
-           : fits::part;
+    return ( (count == pushed.get_count())
+             ? fits::none
+             : fits::part );
 }
 
-template <typename c_t, int R, int C, int m>
-inv_cell<c_t, m> fixed_size_inv<c_t, R, C, m>::
-pop(const int r, const int c, const int count) {
+T void C::push(const int row, const int col, C::cell_type& pushed) {
+    show_cell(row, col).push(pushed);
+}
+
+T void C::push(inv_cell<c_t, m>& pushed) {
+    for (C::cell_type& cell : container) {
+        if (cell.can_push(pushed) != fits::none) cell.push(pushed);
+        if (pushed.is_empty()) return;
+    }
+}
+
+T inv_cell<c_t, m> C::pop(const int r, const int c, const int count) {
     return show_cell(r, c).pop(count);
 }
 
-template <typename c_t, int R, int C, int m>
-int fixed_size_inv<c_t, R, C, m>::get_count(const int r, const int c) const {
+T int C::get_count(const int r, const int c) const {
     return show_cell(r, c).get_count();
 }
 
-template <typename c_t, int R, int C, int m>
-bool fixed_size_inv<c_t, R, C, m>::is_empty(const int r, const int c) const {
+T bool C::is_empty(const int r, const int c) const {
     return (get_count(r, c) == 0);
 }
 
-template <typename c_t, int R, int C, int m>
-bool fixed_size_inv<c_t, R, C, m>::is_empty() const {
-    return std::all_of( cbegin(), cend()
+T bool C::is_empty() const {
+    return std::all_of( begin(), end()
                       , [](const auto& cell) { return cell.is_empty(); } );
 }
 
-template <typename c_t, int R, int C, int m>
-void fixed_size_inv<c_t, R, C, m>::sort() {
-    std::sort(std::begin(container), std::end(container));
-}
+#undef T
+#undef C
 
 } // namespace mag;
 

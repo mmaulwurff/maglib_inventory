@@ -47,29 +47,36 @@ const struct {
 
     {
         two_int_cell item2(5, 1);
-        const fits result = item.push(item2);
-        assert(item.get_count() == 1);
+        const fits result = item.can_push(item2);
         assert(result == fits::full);
+        item.push(item2);
+        assert(item.get_count() == 1);
     } {
         two_int_cell item3(5, 1);
-        const fits result_two = item.push(item3);
+        const fits result_two = item.can_push(item3);
+        assert(result_two == fits::full);
+        item.push(item3);
         assert(item.get_count() == 2);
         assert(item3.get_count() == 0);
-        assert(result_two == fits::full);
     } {
         two_int_cell item_popped = item.pop(1);
         assert(item_popped.show_content() == 5);
         assert(item.get_count() == 1);
     } {
         two_int_cell item_push(5, 2);
-        const fits result_push = item.push(item_push);
+        const fits result_push = item.can_push(item_push);
         assert(result_push == fits::part);
+        item.push(item_push);
     } {
-        two_int_cell item_no_fit(3, 1);
-        const fits result_no_fit = item.push(item_no_fit);
+        const two_int_cell item_no_fit(3, 1);
+        const fits result_no_fit = item.can_push(item_no_fit);
         assert(result_no_fit == fits::none);
     }
     cout << "two_int_cell item after: " << item << endl;
+    { // push into full cell test
+        const two_int_cell full(3, 2), other(3, 1);
+        assert(full.can_push(other) == fits::none);
+    }
 }},
 
 { "managed_pointer", 1, []() {
@@ -146,11 +153,13 @@ const struct {
 
     { // full fit
         cell c2(new memory_test(40), max_stack / 2 - 1);
-        assert(c1.push(c2) == fits::full);
+        assert(c1.can_push(c2) == fits::full);
+        c1.push(c2);
 
     } { // partial fit
         cell c3(new memory_test(40), max_stack / 2);
-        assert(c1.push(c3) == fits::part);
+        assert(c1.can_push(c3) == fits::part);
+        c1.push(c3);
         assert(c1.get_count() == c1.get_max_stack_size());
         assert(c3.get_count() == max_stack / 2 - 1);
 
@@ -167,27 +176,22 @@ const struct {
     inv_type inv;
     assert(inv.is_empty(0, 0));
     assert(inv.is_empty());
-    {
+
+    { // push test
         cell c(new memory_test(7), 3);
         inv.push(1, 2, c);
         assert(inv.get_count(1, 2) == 3);
-        cell cn(new memory_test(1), 9);
-        inv.push(1, 3, cn);
-    } {
         cell c2(new memory_test(5), 4);
-        inv.push(1, 2, c2);
-        cell c3(new memory_test(9));
-        inv.push(c3);
-        cout << "Push inventory:" << endl << inv;
-    } {
+        assert(inv.can_push(1, 2, c2) == fits::none);
+
+    } { // pop test
         cell c3 = inv.pop(1, 2, 1);
         assert(inv.get_count(1, 2) == 2);
-    } {
+
+    } { // iterator test
         for (const cell& c: inv) {
             cout << c << endl;
         }
-    } { // sort test
-        inv.sort();
     }
 }},
 
@@ -209,26 +213,40 @@ const struct {
         inv_type inv(size);
         // fill inventory
         for (int i = 0; i < size; ++i) {
-            assert(inv.push(cell(new memory_test(i))) == fits::full);
+            cell c(new memory_test(i));
+            assert(inv.can_push(c) == fits::full);
+            inv.push(c);
         }
-        // object is equal to one of the cells
-        assert(inv.push(cell(new memory_test(1))) == fits::full);
-        // object is not equal to any of the cells.
-        assert(inv.push(cell(new memory_test())) == fits::none);
-        // push to exact cell, object is equal:
-        assert(inv.push(0, cell(new memory_test(0))) == fits::full);
-        // push to exact cell, object is not equal:
-        assert(inv.push(1, cell(new memory_test(0))) == fits::none);
+        { // object is equal to one of the cells
+            cell equals(new memory_test(1));
+            assert(inv.can_push(equals) == fits::full);
+            inv.push(equals);
+        } { // object is not equal to any of the cells.
+            cell not_equals(new memory_test(-1));
+            assert(inv.can_push(not_equals) == fits::none);
+        } { // push to exact cell, object is equal:
+            cell equals(new memory_test(0));
+            assert(inv.can_push(0, equals) == fits::full);
+            inv.push(equals);
+        } { // push to exact cell, object is not equal:
+            cell not_equal(new memory_test(0));
+            assert(inv.can_push(1, not_equal) == fits::none);
+        }
 
     } { // expand push test
         inv_type inv(3);
-        for (int i = 0; i < 3; ++i) inv.push(cell(new memory_test()));
-        inv.push_expand(cell(new memory_test()));
+        for (int i = 0; i < 3; ++i) {
+            cell p(new memory_test);
+            inv.push(p);
+        }
+        cell expand(new memory_test);
+        inv.push_expand(expand);
         assert(inv.get_size() == 4);
 
     } { // pop test
         inv_type inv(5);
-        inv.push(cell(new memory_test()));
+        cell c(new memory_test);
+        inv.push(c);
         cell p = inv.pop(0, 1);
         assert(p.get_count() == 1);
         assert(inv.is_empty());
@@ -237,32 +255,30 @@ const struct {
 
     } { // int reset test
         int_inv_type inv(5);
-        inv.push(int_cell(3));
+        int_cell c(3);
+        inv.push(c);
         int_cell p = inv.pop(0, 1);
         assert(p.show_content() == 3);
         assert(inv.content_at(0) == 0);
 
     } { // show test
         dynamic_inv<int, 10> inv(5);
-        inv.push(dynamic_inv<int, 10>::cell_type(50, 3));
+        decltype(inv)::cell_type cell(50, 3);
+        inv.push(cell);
         assert(inv.content_at(0) == 50);
         assert(inv.cell_at(0).get_count() == 3);
         assert(inv.cell_at(0).show_content() == 50);
 
     } { // resize test
         int_inv_type inv(2);
-        for (size_t i = 0; i < inv.get_size(); ++i) inv.push(int_cell(i));
+        for (size_t i = 0; i < inv.get_size(); ++i) {
+            int_cell cell(i);
+            inv.push(cell);
+        }
         inv.resize(3);
         assert(inv.get_size() == 3);
         assert(inv.content_at(0) == 0);
         assert(inv.content_at(1) == 1);
-
-    } { // sort test
-        int_inv_type inv(5);
-        for (size_t i = 0; i < inv.get_size(); ++i) inv.push(int_cell(5-i));
-        inv.sort();
-        assert(inv.content_at(0) == 1);
-        assert(inv.content_at(inv.get_size() - 1) == 5);
     }
 }},
 

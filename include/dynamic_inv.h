@@ -28,28 +28,23 @@ public:
 
     int get_count(int i) const;
     bool is_empty(int i) const;
+
+    fits can_push(int i, const cell_type& pushed) const;
+    fits can_push(const cell_type& pushed) const;
     ///@}
 
     /** @name cell operations */ ///@{
     const cell_type& cell_at(int i) const;
     const content_type& content_at(int i) const;
 
-    fits push(int i, cell_type& pushed);
-    fits push(int i, cell_type&& pushed);
-
-    fits push(cell_type& pushed);
-    fits push(cell_type&& pushed);
-
+    void push(int i, cell_type& pushed);
+    void push(cell_type& pushed);
     void push_expand(cell_type& pushed);
-    void push_expand(cell_type&& pushed);
 
     cell_type pop(int i, int count);
     ///@}
 
-    /** @name inventory operations */ ///@{
     void resize(size_t size);
-    void sort();
-    ///@}
 
     typedef std::vector<cell_type> container_type;
     typedef mag_detail::t_iterator<typename container_type::iterator,
@@ -61,13 +56,13 @@ public:
     iterator begin() { return iterator(inv.begin(), inv.end()); }
     iterator end() { return iterator(inv.end(), inv.end()); }
 
-    c_iterator cbegin() const { return c_iterator(inv.begin(), inv.end()); }
-    c_iterator cend() const { return c_iterator(inv.end(), inv.end()); }
+    c_iterator begin() const { return c_iterator(inv.begin(), inv.end()); }
+    c_iterator end() const { return c_iterator(inv.end(), inv.end()); }
     ///@}
 
 protected:
 
-    cell_type& at(const int i) { return inv[i]; }
+    cell_type& cell_at_m(const int i) { return inv[i]; }
 
 private:
 
@@ -75,97 +70,97 @@ private:
 
 };
 
-template <typename cell_type, int max>
-dynamic_inv<cell_type, max>::dynamic_inv(const size_t size)
+#define T template <typename content_type, int max>
+#define C dynamic_inv<content_type, max>
+
+T C::dynamic_inv(const size_t size)
     : inv(size)
 {}
 
-template <typename c_t, int m>
-const typename dynamic_inv<c_t, m>::cell_type&
-dynamic_inv<c_t, m>::cell_at(const int i) const {
+T const typename C::cell_type& C::cell_at(const int i) const {
     return inv[i];
 }
 
-template <typename cell_type, int max>
-bool dynamic_inv<cell_type, max>::is_empty(const int i) const {
+T bool C::is_empty(const int i) const {
     return (get_count(i) == 0);
 }
 
-template <typename cell_type, int max>
-int dynamic_inv<cell_type, max>::get_count(const int i) const {
+T int C::get_count(const int i) const {
     return inv[i].get_count();
 }
 
-template <typename cell_type, int max>
-bool dynamic_inv<cell_type, max>::is_empty() const {
-    return std::all_of( cbegin(), cend()
+T bool C::is_empty() const {
+    return std::all_of( begin(), end()
                       , [](const cell_type& c) { return c.is_empty(); });
 }
 
-template <typename cell_type, int max>
-size_t dynamic_inv<cell_type, max>::get_size() const {
+T size_t C::get_size() const {
     return inv.size();
 }
 
-template <typename c_t, int m>
-fits dynamic_inv<c_t, m>::push(const int i, inv_cell<c_t, m>& pushed) {
-    return push(i, std::move(pushed));
+T fits C::can_push(const int i, const C::cell_type& pushed) const {
+    return cell_at(i).can_push(pushed);
 }
 
-template <typename c_t, int m>
-fits dynamic_inv<c_t, m>::push(const int i, inv_cell<c_t, m>&& pushed) {
-    return at(i).push(pushed);
-}
-
-template <typename c_t, int m>
-fits dynamic_inv<c_t, m>::push(inv_cell<c_t, m>& pushed) {
-    return push(std::move(pushed));
-}
-
-template <typename c_t, int m>
-fits dynamic_inv<c_t, m>::push(inv_cell<c_t, m>&& pushed) {
-    const int old_count = pushed.get_count();
-    for (dynamic_inv<c_t, m>::cell_type& c : inv) {
-        if (c.push(pushed) == fits::full) return fits::full;
+T fits C::can_push(const cell_type& pushed) const {
+    int count = pushed.get_count();
+    for (const C::cell_type& cell : inv) {
+        switch (cell.can_push(pushed)) {
+        case fits::none: break;
+        case fits::part:
+            count -= cell.get_max_stack_size() - cell.get_count();
+            if (count <= 0) return fits::full;
+            break;
+        case fits::full: return fits::full;
+        }
     }
-    return (old_count == pushed.get_count())
-           ? fits::none
-           : fits::part;
+    return ( (count == pushed.get_count())
+             ? fits::none
+             : fits::part );
 }
 
-template <typename c_t, int m>
-void dynamic_inv<c_t, m>::push_expand(cell_type& pushed) {
-    push_expand(std::move(pushed));
+T void C::push(const int i, C::cell_type& pushed) {
+    cell_at_m(i).push(pushed);
 }
 
-template <typename c_t, int m>
-void dynamic_inv<c_t, m>::push_expand(cell_type&& pushed) {
-    for (dynamic_inv<c_t, m>::cell_type& c : inv) {
-        if (c.push(pushed) == fits::full) return;
+T void C::push(C::cell_type& pushed) {
+    for (C::cell_type& cell : inv) {
+        if (cell.can_push(pushed) != fits::none) cell.push(pushed);
+        if (pushed.is_empty()) return;
     }
-    resize(get_size() + 1);
-    inv.back().push(pushed);
 }
 
-template <typename c_t, int m>
-inv_cell<c_t, m> dynamic_inv<c_t, m>::pop(const int i, const int count) {
-    return at(i).pop(count);
+T void C::push_expand(cell_type& pushed) {
+    switch (can_push(pushed)) {
+    case fits::none:
+        resize(get_size() + 1);
+        inv.back().push(pushed);
+        break;
+    case fits::part:
+        push(pushed);
+        resize(get_size() + 1);
+        inv.back().push(pushed);
+        break;
+    case fits::full:
+        push(pushed);
+        break;
+    }
 }
 
-template <typename c_t, int m>
-const c_t& dynamic_inv<c_t, m>::content_at(const int i) const {
+T typename C::cell_type C::pop(const int i, const int count) {
+    return cell_at_m(i).pop(count);
+}
+
+T const content_type& C::content_at(const int i) const {
     return inv[i].show_content();
 }
 
-template <typename c_t, int m>
-void dynamic_inv<c_t, m>::resize(const size_t size) {
+T void C::resize(const size_t size) {
     inv.resize(size);
 }
 
-template <typename c_t, int m>
-void dynamic_inv<c_t, m>::sort() {
-    std::sort(inv.begin(), inv.end());
-}
+#undef T
+#undef C
 
 }
 
@@ -173,8 +168,8 @@ template <typename c_t, int m>
 std::ostream& operator<<( std::ostream& stream
                         , const mag::dynamic_inv<c_t, m>& inv)
 {
-    for (size_t i = 0; i < inv.get_size(); ++i) {
-        stream << inv.c_at(i) << std::endl;
+    for (const auto& cell : inv) {
+        stream << cell << std::endl;
     }
     return stream;
 }
