@@ -6,29 +6,15 @@
 #include <ostream>
 #include <cassert>
 
-HAS_METHOD_INIT(get_max_stack_size)
-
-namespace mag_detail {
-template <typename T, int max, int has_max> struct get_max_stack_size_inner
-    { static int get(const T&) { return 0; } };
-
-template <typename T, int max> struct get_max_stack_size_inner<T, max, 0>
-    { static int get(const T&) { return max; } };
-
-template <typename T, int max> struct get_max_stack_size_inner<T, max, 1>
-    { static int get(const T& c) { return c.get_max_stack_size(); } };
-}
-
 namespace mag {
-    enum class fits { none, part, full };
+
+enum class fits { none, part, full };
 
 template <typename content_type, int max_stack_size = 1>
 class inv_cell {
-    static_assert(max_stack_size >= 1, "minimal stack size is 1");
-
 public:
 
-    inv_cell() : count(0), content() {}
+    inv_cell();
 
     inv_cell(const content_type& init, int count = 1);
 
@@ -44,20 +30,44 @@ public:
 
     inv_cell pop(int count);
 
-    int get_count() const { return count; }
-    bool is_empty() const { return count == 0; }
-    const content_type& show_content() const { return content; }
+    int get_count() const;
+    bool is_empty() const;
+    const content_type& show_content() const;
 
     bool operator<(const inv_cell& other) const;
 
 private:
 
+    static_assert(max_stack_size >= 1, "minimal stack size is 1");
+
     int count;
     content_type content;
 };
 
-template <typename c_t, int max>
-fits inv_cell<c_t, max>::can_push(const inv_cell& cell) const {
+namespace detail {
+
+HAS_METHOD_INIT(get_max_stack_size)
+
+template <typename T, int max, int has_max> struct get_max_stack_size_inner
+{ static int get(const T&) { return 0; } };
+
+template <typename T, int max> struct get_max_stack_size_inner<T, max, 0>
+{ static int get(const T&) { return max; } };
+
+template <typename T, int max> struct get_max_stack_size_inner<T, max, 1>
+{ static int get(const T& c) { return c.get_max_stack_size(); } };
+
+} // namespace detail
+
+#define T template <typename c_t, int max>
+#define C inv_cell<c_t, max>
+
+T C::inv_cell()
+    : count(0)
+    , content()
+{}
+
+T fits C::can_push(const inv_cell& cell) const {
     assert(cell.count > 0);
 
     if (count == 0) return fits::full;
@@ -71,8 +81,7 @@ fits inv_cell<c_t, max>::can_push(const inv_cell& cell) const {
         : fits::part );
 }
 
-template <typename c_t, int max>
-void inv_cell<c_t, max>::push(inv_cell<c_t, max>& pushed) {
+T void C::push(inv_cell<c_t, max>& pushed) {
     if (count == 0) {
         content = pushed.content;
         count   = pushed.count;
@@ -89,8 +98,7 @@ void inv_cell<c_t, max>::push(inv_cell<c_t, max>& pushed) {
     }
 }
 
-template <typename c_t, int max>
-inv_cell<c_t, max> inv_cell<c_t, max>::pop(const int pop_count) {
+T C C::pop(const int pop_count) {
     assert(count >= pop_count);
     count -= pop_count;
     if (count == 0) {
@@ -101,8 +109,7 @@ inv_cell<c_t, max> inv_cell<c_t, max>::pop(const int pop_count) {
     return inv_cell<c_t, max>(content, pop_count);
 }
 
-template <typename c_t, int max>
-inv_cell<c_t, max>::inv_cell(const c_t& init, const int _count)
+T C::inv_cell(const c_t& init, const int _count)
     : count(_count)
     , content(init)
 {
@@ -110,16 +117,29 @@ inv_cell<c_t, max>::inv_cell(const c_t& init, const int _count)
     assert(    count <= get_max_stack_size());
 }
 
-template <typename c_t, int max>
-int inv_cell<c_t, max>::get_max_stack_size() const {
-    return mag_detail::get_max_stack_size_inner<c_t, max,
-        HAS_METHOD(c_t, get_max_stack_size, int())>::get(content);
+T int C::get_max_stack_size() const {
+    return detail::get_max_stack_size_inner<c_t, max,
+        detail::HAS_METHOD(c_t, get_max_stack_size, int())>::get(content);
 }
 
-template <typename c_t, int max>
-bool inv_cell<c_t, max>::operator<(const inv_cell<c_t, max>& other) const {
+T bool C::operator<(const inv_cell<c_t, max>& other) const {
     return content < other.content;
 }
+
+T int C::get_count() const {
+    return count;
+}
+
+T bool C::is_empty() const {
+    return count == 0;
+}
+
+T const c_t& C::show_content() const {
+    return content;
+}
+
+#undef T
+#undef C
 
 } // namespace mag;
 

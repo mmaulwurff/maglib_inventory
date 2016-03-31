@@ -3,8 +3,8 @@
 
 #include "inv_cell.h"
 #include "t_iterator.h"
+
 #include <vector>
-#include <algorithm>
 
 namespace mag {
 
@@ -19,6 +19,11 @@ class dynamic_inv {
 public:
 
     typedef inv_cell <content_type, max> cell_type;
+    typedef std::vector<cell_type> container_t;
+    typedef detail::t_iterator<typename container_t::iterator,
+        dynamic_inv> iterator;
+    typedef detail::t_iterator<typename container_t::const_iterator,
+        dynamic_inv> const_iterator;
 
     dynamic_inv(size_t size);
 
@@ -46,27 +51,21 @@ public:
 
     void resize(size_t size);
 
-    typedef std::vector<cell_type> container_type;
-    typedef mag_detail::t_iterator<typename container_type::iterator,
-        dynamic_inv> iterator;
-    typedef mag_detail::t_iterator<typename container_type::const_iterator,
-        dynamic_inv> c_iterator;
-
     /** @name iterators section */ ///@{
-    iterator begin() { return iterator(inv.begin(), inv.end()); }
-    iterator end() { return iterator(inv.end(), inv.end()); }
+    iterator begin();
+    iterator end();
 
-    c_iterator begin() const { return c_iterator(inv.begin(), inv.end()); }
-    c_iterator end() const { return c_iterator(inv.end(), inv.end()); }
+    const_iterator begin() const;
+    const_iterator end() const;
     ///@}
 
 protected:
 
-    cell_type& cell_at_m(const int i) { return inv[i]; }
+    cell_type& cell_at_m(int i);
 
 private:
 
-    container_type inv;
+    container_t inv;
 
 };
 
@@ -77,7 +76,27 @@ T C::dynamic_inv(const size_t size)
     : inv(size)
 {}
 
+T typename C::iterator C::begin() {
+    return C::iterator(inv.begin(), inv.end());
+}
+
+T typename C::iterator C::end() {
+    return C::iterator(inv.end(), inv.end());
+}
+
+T typename C::const_iterator C::begin() const {
+    return C::const_iterator(inv.begin(), inv.end());
+}
+
+T typename C::const_iterator C::end() const {
+    return C::const_iterator(inv.end(), inv.end());
+}
+
 T const typename C::cell_type& C::cell_at(const int i) const {
+    return inv[i];
+}
+
+T typename C::cell_type& C::cell_at_m(const int i) {
     return inv[i];
 }
 
@@ -90,15 +109,15 @@ T int C::get_count(const int i) const {
 }
 
 T bool C::is_empty() const {
-    return std::all_of( begin(), end()
-                      , [](const cell_type& c) { return c.is_empty(); });
+    for (const cell_type& cell : inv) if (not cell.is_empty()) return false;
+    return true;
 }
 
 T size_t C::get_size() const {
     return inv.size();
 }
 
-T fits C::can_push(const int i, const C::cell_type& pushed) const {
+T fits C::can_push(const int i, const cell_type& pushed) const {
     return cell_at(i).can_push(pushed);
 }
 
@@ -119,11 +138,11 @@ T fits C::can_push(const cell_type& pushed) const {
              : fits::part );
 }
 
-T void C::push(const int i, C::cell_type& pushed) {
+T void C::push(const int i, cell_type& pushed) {
     cell_at_m(i).push(pushed);
 }
 
-T void C::push(C::cell_type& pushed) {
+T void C::push(cell_type& pushed) {
     for (C::cell_type& cell : inv) {
         if (cell.can_push(pushed) != fits::none) cell.push(pushed);
         if (pushed.is_empty()) return;
@@ -162,7 +181,7 @@ T void C::resize(const size_t size) {
 #undef T
 #undef C
 
-}
+} // namespace mag;
 
 template <typename c_t, int m>
 std::ostream& operator<<( std::ostream& stream
