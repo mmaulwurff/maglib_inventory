@@ -16,17 +16,13 @@ template <typename pointed_type, typename copier = default_copier<pointed_type>>
 class managed_pointer {
 public:
 
-    managed_pointer(pointed_type* const set) : pointer(set) {}
+    managed_pointer();
+    managed_pointer(pointed_type* set);
 
-    managed_pointer() : pointer(nullptr) {}
+    explicit managed_pointer(const managed_pointer& other);
+    explicit managed_pointer(managed_pointer&& other);
 
-    explicit managed_pointer(const managed_pointer& other)
-        : pointer(copier()(*other)) {}
-
-    explicit managed_pointer(managed_pointer&& other)
-        : pointer(other.release()) { }
-
-    ~managed_pointer() { delete pointer; }
+    ~managed_pointer();
 
     pointed_type* release() const;
 
@@ -36,11 +32,11 @@ public:
 
     managed_pointer& operator=(const managed_pointer& other);
 
-    const pointed_type& operator* () const { return *pointer; }
-    const pointed_type* operator->() const { return  pointer; }
-    pointed_type* operator->() { return pointer; }
+    const pointed_type& operator* () const;
+    const pointed_type* operator->() const;
+    pointed_type* operator->();
 
-    const pointed_type* get() const { return pointer; }
+    const pointed_type* get() const;
 
     int get_max_stack_size() const;
 
@@ -58,9 +54,30 @@ p* managed_pointer<p, c>::release() const {
     return ret;
 }
 
-template <typename p, typename c>
-managed_pointer<p, c>&
-managed_pointer<p, c>::operator=(const managed_pointer<p, c>& other) {
+#define T template <typename p, typename c>
+#define C managed_pointer<p, c>
+
+T C::managed_pointer(p* const set)
+    : pointer(set)
+{}
+
+T C::managed_pointer()
+    : pointer(nullptr)
+{}
+
+T C::managed_pointer(const managed_pointer& other)
+    : pointer(c()(*other))
+{}
+
+T C::managed_pointer(managed_pointer&& other)
+    : pointer(other.release())
+{}
+
+T C::~managed_pointer() {
+    delete pointer;
+}
+
+T C& C::operator=(const managed_pointer& other) {
     if (pointer != other.pointer) {
         delete pointer;
         pointer = other.pointer;
@@ -69,33 +86,39 @@ managed_pointer<p, c>::operator=(const managed_pointer<p, c>& other) {
     return *this;
 }
 
-template <typename p, typename c>
-bool managed_pointer<p, c>::operator==(const managed_pointer<p, c>& o) const {
+T const p& C::operator* () const {
+    return *pointer;
+}
+
+T const p* C::get()        const { return pointer; }
+T const p* C::operator->() const { return pointer; }
+T       p* C::operator->()       { return pointer; }
+
+T bool C::operator==(const managed_pointer& o) const {
     if (pointer == o.pointer) return true;
     if (pointer == nullptr || o.pointer == nullptr) return false;
     return (*pointer == *(o.pointer));
 }
 
-template <typename p, typename c>
-bool
-managed_pointer<p, c>::operator!=(const managed_pointer<p, c>& other) const {
+T bool C::operator!=(const managed_pointer& other) const {
     return (not operator==(other));
 }
 
-template <typename p, typename c>
-bool managed_pointer<p, c>::operator<(const managed_pointer<p, c>& o) const {
+T bool C::operator<(const managed_pointer& o) const {
     if (pointer == o.pointer) return true;
     if (pointer == nullptr || o.pointer == nullptr) return false;
     return (*pointer < *(o.pointer));
 }
 
-template <typename p, typename c>
-int managed_pointer<p, c>::get_max_stack_size() const {
+T int C::get_max_stack_size() const {
     if (pointer == nullptr) return null_max_stack_size;
     return pointer->get_max_stack_size();
 }
 
-} // namespace mag
+#undef T
+#undef C
+
+} // namespace mag;
 
 template <typename P, typename c>
 std::ostream&
